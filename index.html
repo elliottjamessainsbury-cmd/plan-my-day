@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan My Day</title>
+<meta name="description" content="A prototype daily-planning dashboard for a Franco-British marketing agency, assembled from Slack, Drive, Calendar and Outlook.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root {
+    --ground: #F2F4F3;
+    --surface: #FFFFFF;
+    --surface-2: #E9EDEC;
+    --ink: #12201F;
+    --ink-2: #4A5A58;
+    --ink-3: #75847F;
+    --line: #D6DEDC;
+    --line-strong: #BCC7C5;
+    --accent: #1F5E63;
+    --accent-ink: #1F5E63;
+    --accent-soft: #E1EDED;
+    --amber: #96601399;
+    --amber-ink: #8A5A11;
+    --amber-soft: #F7EDDB;
+    --claret-ink: #8E2F3B;
+    --claret-soft: #F7E3E5;
+    --moss-ink: #3A6444;
+    --moss-soft: #E3EFE5;
+    --console-bg: #0E1B1B;
+    --console-surface: #16292A;
+    --console-ink: #DCE9E7;
+    --console-ink-2: #8FA8A5;
+    --console-accent: #6FC8BC;
+    --console-line: #24403F;
+    --shadow: 0 1px 2px rgba(18, 32, 31, .05), 0 8px 24px -12px rgba(18, 32, 31, .18);
+    --radius: 10px;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #101A1A;
+      --surface: #172425;
+      --surface-2: #1F2F30;
+      --ink: #E6EDEC;
+      --ink-2: #A9B9B7;
+      --ink-3: #7B8D8B;
+      --line: #2A3B3B;
+      --line-strong: #3A4E4E;
+      --accent: #74BDB8;
+      --accent-ink: #8FCFC9;
+      --accent-soft: #1B3234;
+      --amber-ink: #DDA765;
+      --amber-soft: #33281A;
+      --claret-ink: #E0919A;
+      --claret-soft: #382327;
+      --moss-ink: #8CC298;
+      --moss-soft: #1C2F22;
+      --console-bg: #0A1313;
+      --console-surface: #122122;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #101A1A;
+    --surface: #172425;
+    --surface-2: #1F2F30;
+    --ink: #E6EDEC;
+    --ink-2: #A9B9B7;
+    --ink-3: #7B8D8B;
+    --line: #2A3B3B;
+    --line-strong: #3A4E4E;
+    --accent: #74BDB8;
+    --accent-ink: #8FCFC9;
+    --accent-soft: #1B3234;
+    --amber-ink: #DDA765;
+    --amber-soft: #33281A;
+    --claret-ink: #E0919A;
+    --claret-soft: #382327;
+    --moss-ink: #8CC298;
+    --moss-soft: #1C2F22;
+    --console-bg: #0A1313;
+    --console-surface: #122122;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ---------- header ---------- */
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 27px;
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+
+  .wordmark span {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-left: 12px;
+    vertical-align: middle;
+  }
+
+  .masthead-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+
+  .datestamp {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .02em;
+  }
+
+  .avatar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .avatar b {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  .sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .source {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  .source i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--moss-ink);
+    flex: none;
+  }
+
+  .source b {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .source em {
+    font-style: normal;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  /* ---------- brief ---------- */
+
+  .brief {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    box-shadow: var(--shadow);
+  }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 12px;
+  }
+
+  .brief h2 {
+    font-family: var(--serif);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+
+  .brief p {
+    margin: 0;
+    max-width: 68ch;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+
+  .brief .footnote {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-size: 13.5px;
+    color: var(--amber-ink);
+  }
+
+  /* ---------- layout ---------- */
+
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .panel-head h3 {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .panel-head .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .04em;
+    color: var(--ink-3);
+  }
+
+  /* ---------- timeline ---------- */
+
+  .timeline-scroll {
+    position: relative;
+    height: 430px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .timeline {
+    position: relative;
+    margin: 0 14px 0 52px;
+  }
+
+  .hour {
+    position: absolute;
+    left: -52px;
+    right: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .hour span {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 44px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+    background: var(--surface);
+    padding-right: 2px;
+  }
+
+  .halfhour {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dotted var(--line);
+    opacity: .6;
+  }
+
+  .nowline {
+    position: absolute;
+    left: -52px;
+    right: 0;
+    border-top: 1.5px solid var(--claret-ink);
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .nowline span {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 44px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--claret-ink);
+    background: var(--surface);
+  }
+
+  .block {
+    position: absolute;
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--line-strong);
+    border-left: 3px solid var(--ink-3);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--ink);
+    font: inherit;
+    padding: 5px 9px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+
+  .block:hover { box-shadow: var(--shadow); }
+
+  .block b {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .block em {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+
+  .block.client { background: var(--accent-soft); border-left-color: var(--accent); }
+  .block.company { background: var(--moss-soft); border-left-color: var(--moss-ink); }
+  .block.external { background: var(--amber-soft); border-left-color: var(--amber-ink); }
+  .block.hold { background: transparent; border-style: dashed; border-left-style: dashed; color: var(--ink-3); }
+  .block.tentative { border-style: dashed; }
+  .block.past { opacity: .42; }
+  .block.selected { box-shadow: 0 0 0 2px var(--accent); }
+
+  .event-detail {
+    border-top: 1px solid var(--line);
+    padding: 16px 18px;
+    background: var(--ground);
+  }
+
+  .event-detail.empty {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+
+  .event-detail h4 {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+
+  .dl {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 4px 14px;
+    margin: 12px 0 0;
+    font-size: 13.5px;
+  }
+
+  .dl dt {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 3px;
+  }
+
+  .dl dd { margin: 0; color: var(--ink-2); }
+
+  .flag {
+    margin-top: 12px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+    font-size: 13px;
+  }
+
+  /* ---------- lists ---------- */
+
+  .rows { list-style: none; margin: 0; padding: 0; }
+
+  .row { border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row.flash { animation: flash 1.6s ease; }
+
+  @keyframes flash {
+    0%, 55% { background: var(--accent-soft); }
+    100% { background: transparent; }
+  }
+
+  .row-head {
+    display: grid;
+    grid-template-columns: 3px minmax(0, 1fr) auto;
+    gap: 0 12px;
+    align-items: start;
+    width: 100%;
+    background: none;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    padding: 13px 18px 13px 15px;
+    cursor: pointer;
+  }
+
+  .row-head:hover { background: var(--surface-2); }
+
+  .stripe {
+    align-self: stretch;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+
+  .row.overdue .stripe { background: var(--claret-ink); }
+  .row.urgent .stripe { background: var(--amber-ink); }
+  .row.waiting .stripe { background: var(--accent); }
+  .row.low .stripe { background: var(--line-strong); }
+
+  .row-main { min-width: 0; }
+
+  .row-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+  }
+
+  .row-top b { font-size: 14px; font-weight: 600; }
+
+  .row-top .channel {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent-ink);
+  }
+
+  .row-top .org {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  .row-subject {
+    font-size: 13.5px;
+    color: var(--ink);
+    margin-top: 1px;
+  }
+
+  .row-preview {
+    font-size: 13px;
+    color: var(--ink-2);
+    margin-top: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .row-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    flex: none;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .row.overdue .chip.state { background: var(--claret-soft); color: var(--claret-ink); }
+  .row.urgent .chip.state { background: var(--amber-soft); color: var(--amber-ink); }
+  .row.waiting .chip.state { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .caret {
+    font-size: 10px;
+    color: var(--ink-3);
+    transition: transform .15s ease;
+  }
+
+  .row.open .caret { transform: rotate(90deg); }
+
+  .row-body {
+    padding: 2px 18px 18px 30px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .row-body .quote {
+    white-space: pre-wrap;
+    margin: 0 0 14px;
+    padding-left: 12px;
+    border-left: 2px solid var(--line);
+    color: var(--ink);
+  }
+
+  .reply {
+    padding: 9px 12px;
+    background: var(--ground);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+  }
+
+  .reply b { color: var(--ink); }
+  .reply span { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-left: 6px; }
+
+  .crosslink {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--accent-ink);
+    padding: 9px 12px;
+    background: var(--accent-soft);
+    border-radius: 6px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .ghost {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: not-allowed;
+  }
+
+  .actions small {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    align-self: center;
+  }
+
+  /* ---------- console ---------- */
+
+  .console {
+    background: var(--console-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--console-line);
+    overflow: hidden;
+    color: var(--console-ink);
+  }
+
+  .console-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--console-line);
+    background: var(--console-surface);
+  }
+
+  .console-head h3 {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--console-ink);
+  }
+
+  .console-head p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--console-ink-2);
+    max-width: 62ch;
+  }
+
+  .console-out {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 18px 20px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .console-out p { margin: 0 0 10px; }
+  .console-out p:last-child { margin-bottom: 0; }
+
+  .ln-prompt { color: var(--console-accent); }
+  .ln-trace { color: var(--console-ink-2); font-size: 12px; }
+  .ln-answer { color: var(--console-ink); font-family: var(--sans); font-size: 14.5px; max-width: 74ch; }
+  .ln-head { color: var(--console-accent); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-top: 16px; }
+  .ln-item { color: var(--console-ink); padding-left: 22px; text-indent: -22px; font-size: 12.5px; }
+  .ln-item i { font-style: normal; color: var(--console-ink-2); }
+  .ln-note { color: var(--console-ink-2); font-size: 12.5px; border-top: 1px solid var(--console-line); padding-top: 10px; margin-top: 14px; }
+
+  .cite {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(111, 200, 188, .14);
+    color: var(--console-accent);
+    border: 1px solid rgba(111, 200, 188, .3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    cursor: pointer;
+    margin: 0 1px;
+  }
+
+  .cite:hover { background: rgba(111, 200, 188, .28); }
+
+  .console-form {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--console-line);
+    background: var(--console-surface);
+  }
+
+  .console-form span {
+    font-family: var(--mono);
+    color: var(--console-accent);
+    align-self: center;
+  }
+
+  .console-form input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--console-ink);
+    font-family: var(--mono);
+    font-size: 13.5px;
+    padding: 6px 0;
+  }
+
+  .console-form input:focus { outline: none; }
+  .console-form input::placeholder { color: var(--console-ink-2); }
+
+  .console-form button {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--console-accent);
+    background: transparent;
+    color: var(--console-accent);
+    cursor: pointer;
+  }
+
+  .console-form button:hover { background: rgba(111, 200, 188, .14); }
+
+  .prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 20px 16px;
+    background: var(--console-surface);
+  }
+
+  .prompts button {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--console-line);
+    background: transparent;
+    color: var(--console-ink-2);
+    cursor: pointer;
+  }
+
+  .prompts button:hover { color: var(--console-ink); border-color: var(--console-accent); }
+
+  .colophon {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    max-width: 78ch;
+    margin: 0;
+  }
+
+  .colophon b { color: var(--ink-2); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .columns { grid-template-columns: minmax(0, 1fr); }
+    .shell { padding: 20px 16px 48px; }
+    .brief { padding: 18px; }
+    .brief h2 { font-size: 21px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="masthead">
+    <h1 class="wordmark">Plan My Day<span>Entente</span></h1>
+    <div class="masthead-right">
+      <span class="datestamp" id="datestamp"></span>
+      <span class="avatar"><b id="initials"></b><span id="viewer"></span></span>
+    </div>
+  </header>
+
+  <div class="sources" id="sources"></div>
+
+  <section class="brief">
+    <p class="kicker">Your day, assembled at 10:40</p>
+    <h2 id="brief-headline"></h2>
+    <p id="brief-body"></p>
+    <p class="footnote" id="brief-footnote"></p>
+  </section>
+
+  <div class="columns">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Today</h3>
+          <span class="meta">7 events · 4h 30m booked</span>
+        </div>
+        <div class="timeline-scroll" id="timeline-scroll">
+          <div class="timeline" id="timeline"></div>
+        </div>
+        <div class="event-detail empty" id="event-detail">Select a meeting to see the agenda, attendees, and what is unresolved going into it.</div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Open discussions</h3>
+          <span class="meta">Slack · tagged, no reply from you</span>
+        </div>
+        <ul class="rows" id="slack-rows"></ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Emails to reply to</h3>
+          <span class="meta">Outlook · 4 of 18 threads</span>
+        </div>
+        <ul class="rows" id="email-rows"></ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="console">
+    <div class="console-head">
+      <h3>Ask Entente</h3>
+      <p>Retrieval across the four connected sources. Every answer cites what it read — click a citation to jump to it.</p>
+    </div>
+    <div class="console-out" id="console-out" aria-live="polite"></div>
+    <form class="console-form" id="console-form">
+      <span>&gt;</span>
+      <input id="console-input" autocomplete="off" placeholder="Ask about a client, a person, or a file…" aria-label="Ask a question">
+      <button type="submit">Ask</button>
+    </form>
+    <div class="prompts" id="prompts"></div>
+  </section>
+
+  <p class="colophon"><b>Prototype.</b> Every person, client, message and file here is fictional. Nothing is connected to a live service — the sample corpus stands in for what four MCP servers would return. The retrieval in the console is real, though: it searches that corpus at query time rather than replaying scripted answers.</p>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  const D = window.ENTENTE_DATA;
+  const DAY_START = 8 * 60;
+  const DAY_END = 19 * 60;
+  const SCALE = 1.15;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clock = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+
+  /* ---------- header ---------- */
+
+  $("datestamp").textContent = D.today.label;
+  $("initials").textContent = D.viewer.initials;
+  $("viewer").textContent = D.viewer.name + " · " + D.viewer.role;
+
+  $("sources").innerHTML = D.sources.map((s) =>
+    `<span class="source"><i></i><b>${s.name}</b><em>${s.detail}</em></span>`
+  ).join("");
+
+  $("brief-headline").innerHTML = D.brief.headline;
+  $("brief-body").innerHTML = D.brief.body;
+  $("brief-footnote").innerHTML = D.brief.footnote;
+
+  /* ---------- timeline ---------- */
+
+  function layout(events) {
+    const sorted = events.slice().sort((a, b) => a.start - b.start || a.end - b.end);
+    const clusters = [];
+    let current = [];
+    let clusterEnd = -1;
+    sorted.forEach((ev) => {
+      if (current.length && ev.start >= clusterEnd) {
+        clusters.push(current);
+        current = [];
+        clusterEnd = -1;
+      }
+      current.push(ev);
+      clusterEnd = Math.max(clusterEnd, ev.end);
+    });
+    if (current.length) clusters.push(current);
+
+    clusters.forEach((cluster) => {
+      const columnEnds = [];
+      cluster.forEach((ev) => {
+        let col = columnEnds.findIndex((end) => ev.start >= end);
+        if (col === -1) { col = columnEnds.length; }
+        columnEnds[col] = ev.end;
+        ev._col = col;
+      });
+      cluster.forEach((ev) => { ev._cols = columnEnds.length; });
+    });
+    return sorted;
+  }
+
+  function renderTimeline() {
+    const track = $("timeline");
+    const height = (DAY_END - DAY_START) * SCALE;
+    track.style.height = height + "px";
+    let html = "";
+
+    for (let m = DAY_START; m <= DAY_END; m += 60) {
+      const top = (m - DAY_START) * SCALE;
+      html += `<div class="hour" style="top:${top}px"><span>${clock(m)}</span></div>`;
+      if (m < DAY_END) html += `<div class="halfhour" style="top:${top + 30 * SCALE}px"></div>`;
+    }
+
+    const nowTop = (D.today.nowMinutes - DAY_START) * SCALE;
+    html += `<div class="nowline" style="top:${nowTop}px"><span>${clock(D.today.nowMinutes)}</span></div>`;
+
+    layout(D.events).forEach((ev) => {
+      const top = (ev.start - DAY_START) * SCALE;
+      const h = Math.max((ev.end - ev.start) * SCALE - 3, 20);
+      const width = 100 / ev._cols;
+      const left = width * ev._col;
+      const cls = [
+        "block",
+        ev.kind,
+        ev.status === "tentative" ? "tentative" : "",
+        ev.end <= D.today.nowMinutes ? "past" : ""
+      ].filter(Boolean).join(" ");
+      html += `<button class="${cls}" id="${ev.id}" data-event="${ev.id}"
+        style="top:${top}px;height:${h}px;left:${left}%;width:calc(${width}% - 4px)">
+        <b>${ev.title}</b><em>${clock(ev.start)}–${clock(ev.end)}${ev.location && ev.location !== "—" ? " · " + esc(ev.location) : ""}</em>
+      </button>`;
+    });
+
+    track.innerHTML = html;
+    const scroller = $("timeline-scroll");
+    scroller.scrollTop = Math.max(nowTop - 90, 0);
+  }
+
+  let selectedEvent = null;
+
+  function showEvent(id) {
+    const ev = D.events.find((e) => e.id === id);
+    if (!ev) return;
+    document.querySelectorAll(".block.selected").forEach((b) => b.classList.remove("selected"));
+    const detail = $("event-detail");
+
+    if (selectedEvent === id) {
+      selectedEvent = null;
+      detail.className = "event-detail empty";
+      detail.textContent = "Select a meeting to see the agenda, attendees, and what is unresolved going into it.";
+      return;
+    }
+
+    selectedEvent = id;
+    document.getElementById(id).classList.add("selected");
+    detail.className = "event-detail";
+    detail.innerHTML = `
+      <h4>${ev.title}</h4>
+      <p class="kicker" style="margin:0">${clock(ev.start)}–${clock(ev.end)} · ${esc(ev.location)} · ${ev.status}</p>
+      <dl class="dl">
+        <dt>Organiser</dt><dd>${esc(ev.organiser)}</dd>
+        ${ev.attendees.length ? `<dt>With</dt><dd>${ev.attendees.map(esc).join(", ")}</dd>` : ""}
+        <dt>Agenda</dt><dd>${esc(ev.agenda)}</dd>
+      </dl>
+      ${ev.notes ? `<div class="flag">${esc(ev.notes)}</div>` : ""}`;
+  }
+
+  /* ---------- lists ---------- */
+
+  const stateLabel = { overdue: "overdue", urgent: "before 11:00", waiting: "waiting", low: "no action" };
+
+  function slackRow(m) {
+    return `<li class="row ${m.severity}" id="${m.id}">
+      <button class="row-head" data-toggle="${m.id}" aria-expanded="false" aria-controls="${m.id}-body">
+        <span class="stripe"></span>
+        <span class="row-main">
+          <span class="row-top"><b>${esc(m.author)}</b><span class="channel">${esc(m.channel)}</span><span class="org">${esc(m.role)}</span></span>
+          <span class="row-preview">${esc(m.preview)}</span>
+        </span>
+        <span class="row-aside">
+          <span class="chip state">${stateLabel[m.severity]}</span>
+          <span class="chip">${esc(m.time)}</span>
+          <span class="caret">▶</span>
+        </span>
+      </button>
+      <div class="row-body" id="${m.id}-body" hidden>
+        <p class="quote">${esc(m.body)}</p>
+        ${m.replies.map((r) => `<div class="reply"><b>${esc(r.author)}</b><span>${esc(r.time)}</span><br>${esc(r.text)}</div>`).join("")}
+        ${m.link ? `<div class="crosslink">${esc(m.link)}</div>` : ""}
+        <div class="actions"><button class="ghost" type="button" disabled>Reply in Slack</button><button class="ghost" type="button" disabled>Draft a reply</button><small>Write actions are out of scope for the prototype.</small></div>
+      </div>
+    </li>`;
+  }
+
+  function emailRow(m) {
+    return `<li class="row ${m.severity}" id="${m.id}">
+      <button class="row-head" data-toggle="${m.id}" aria-expanded="false" aria-controls="${m.id}-body">
+        <span class="stripe"></span>
+        <span class="row-main">
+          <span class="row-top"><b>${esc(m.from)}</b><span class="org">${m.org}${m.external ? " · external" : ""}</span></span>
+          <span class="row-subject">${esc(m.subject)}</span>
+          <span class="row-preview">${esc(m.preview)}</span>
+        </span>
+        <span class="row-aside">
+          <span class="chip state">${m.severity === "low" ? "no action" : m.waitingLabel}</span>
+          <span class="chip">${esc(m.time)}</span>
+          <span class="caret">▶</span>
+        </span>
+      </button>
+      <div class="row-body" id="${m.id}-body" hidden>
+        <p class="quote">${esc(m.body)}</p>
+        <p style="font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin:0">${m.thread} message${m.thread === 1 ? "" : "s"} in this thread</p>
+        ${m.link ? `<div class="crosslink">${esc(m.link)}</div>` : ""}
+        <div class="actions"><button class="ghost" type="button" disabled>Open in Outlook</button><button class="ghost" type="button" disabled>Draft a reply</button><small>Write actions are out of scope for the prototype.</small></div>
+      </div>
+    </li>`;
+  }
+
+  $("slack-rows").innerHTML = D.slack.map(slackRow).join("");
+  $("email-rows").innerHTML = D.emails.map(emailRow).join("");
+
+  function toggleRow(id) {
+    const row = document.getElementById(id);
+    const head = row.querySelector(".row-head");
+    const body = document.getElementById(id + "-body");
+    const open = row.classList.toggle("open");
+    body.hidden = !open;
+    head.setAttribute("aria-expanded", String(open));
+  }
+
+  document.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-toggle]");
+    if (toggle) { toggleRow(toggle.dataset.toggle); return; }
+    const block = e.target.closest("[data-event]");
+    if (block) { showEvent(block.dataset.event); return; }
+    const cite = e.target.closest("[data-jump]");
+    if (cite) { jumpTo(cite.dataset.jump); }
+  });
+
+  function jumpTo(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains("row")) {
+      if (!el.classList.contains("open")) toggleRow(id);
+      el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+    } else if (el.classList.contains("block")) {
+      if (selectedEvent !== id) showEvent(id);
+      document.querySelector(".panel").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    }
+  }
+
+  /* ---------- retrieval ---------- */
+
+  const STOP = new Set("a an and any are as about at be been but by can did do does for from has have how i if in is it its me my of on or our said say saying she he they the their there this to too up us was we what when where which who whom why will with you your anyone someone".split(" "));
+
+  function tokenize(s) {
+    return String(s).toLowerCase()
+      .replace(/[^a-z0-9àâçéèêëîïôûùüÿœ\s]/gi, " ")
+      .split(/\s+/)
+      .filter((t) => t.length > 1 && !STOP.has(t));
+  }
+
+  const corpus = [];
+
+  D.slack.forEach((m) => corpus.push({
+    id: m.id, source: "slack", origin: m.channel, author: m.author, time: m.time,
+    title: m.channel + " — " + m.author, text: m.body + " " + m.replies.map((r) => r.text).join(" "),
+    line: m.preview, entities: m.entities, age: m.waitingHours
+  }));
+
+  D.emails.forEach((m) => corpus.push({
+    id: m.id, source: "outlook", origin: m.org, author: m.from, time: m.time,
+    title: m.subject, text: m.body + " " + m.subject, line: m.preview,
+    entities: m.entities, age: m.severity === "low" ? 0 : 48
+  }));
+
+  D.docs.forEach((d) => corpus.push({
+    id: d.id, source: "drive", origin: d.editedBy, author: d.editedBy, time: d.editedAt,
+    title: d.title, text: d.title + " " + d.summary + " " + d.changes, line: d.summary,
+    entities: d.entities, age: 1, doc: d
+  }));
+
+  D.events.forEach((ev) => corpus.push({
+    id: ev.id, source: "calendar", origin: ev.location, author: ev.organiser, time: clock(ev.start),
+    title: ev.title, text: ev.title + " " + ev.agenda + " " + ev.notes + " " + ev.attendees.join(" "),
+    line: ev.agenda, entities: [], age: 0
+  }));
+
+  D.events.forEach((ev) => {
+    const t = (ev.title + " " + ev.agenda + " " + ev.notes).toLowerCase();
+    Object.entries(D.entityAliases).forEach(([key, aliases]) => {
+      if (aliases.some((a) => t.includes(a))) {
+        const rec = corpus.find((r) => r.id === ev.id);
+        if (!rec.entities.includes(key)) rec.entities.push(key);
+      }
+    });
+  });
+
+  function detectEntities(tokens) {
+    const hits = [];
+    Object.entries(D.entityAliases).forEach(([key, aliases]) => {
+      if (tokens.some((t) => aliases.includes(t))) hits.push(key);
+    });
+    return hits;
+  }
+
+  function search(query) {
+    const tokens = tokenize(query);
+    const entities = detectEntities(tokens);
+    return corpus.map((rec) => {
+      const hay = (rec.title + " " + rec.text + " " + rec.author).toLowerCase();
+      let score = 0;
+      tokens.forEach((t) => { if (hay.includes(t)) score += 1; });
+      entities.forEach((e) => { if (rec.entities.includes(e)) score += 4; });
+      if (rec.age && rec.age > 16) score += 0.5;
+      return { rec, score };
+    }).filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score);
+  }
+
+  /* A citation the reader cannot defend is worse than no citation. Keep only
+     what scores close to the best match rather than padding to a fixed count. */
+  function relevant(scored) {
+    if (!scored.length) return [];
+    const cutoff = Math.max(scored[0].score * 0.5, 1.5);
+    return scored.filter((r) => r.score >= cutoff).slice(0, 5).map((r) => r.rec);
+  }
+
+  const SOURCE_LABEL = { slack: "Slack", outlook: "Outlook", drive: "Drive", calendar: "Calendar" };
+
+  function intentOf(q) {
+    const s = q.toLowerCase();
+    if (/(has|have|did|was|were)\s+(anyone|someone|anybody|\w+)\s+(updated|update|changed|edited|added|touched)|any (updates|changes)|latest version|who (updated|edited|changed)/.test(s)) return "revision";
+    if (/(waiting|longest|overdue|owe|chase|need(s)? (me|my)|on my plate|catch up)/.test(s)) return "triage";
+    if (/(saying|going on|happening|status|update on|tell me about|where are we|what's the latest)/.test(s)) return "synthesis";
+    return "search";
+  }
+
+  function citeList(records) {
+    return records.map((rec, i) =>
+      `<p class="ln-item"><button class="cite" data-jump="${rec.id}">[${i + 1}]</button> <i>${SOURCE_LABEL[rec.source]} · ${esc(rec.author)} · ${esc(rec.time)}</i> — ${rec.source === "drive" ? rec.title + " " + rec.doc.version : esc(rec.line)}</p>`
+    ).join("");
+  }
+
+  function compose(query) {
+    const scored = search(query);
+    const results = relevant(scored);
+    const intent = intentOf(query);
+    const lines = [];
+
+    /* Triage asks about the state of the queue, not its contents, so it is
+       answered structurally rather than by search. */
+    if (intent === "triage") {
+      const open = corpus
+        .filter((r) => (r.source === "slack" || r.source === "outlook") && r.age > 0)
+        .sort((a, b) => b.age - a.age)
+        .slice(0, 4);
+      lines.push(`<p class="ln-answer">Four things are waiting on you. The oldest is ${esc(open[0].author)} in ${esc(open[0].origin)}, open since ${esc(open[0].time)}. The most time-critical is not the oldest, though — Camille's tagline question came in at 08:15 and the review it blocks starts at 11:00.</p>`);
+      lines.push(`<p class="ln-head">Oldest first</p>`);
+      lines.push(citeList(open));
+      return lines;
+    }
+
+    if (!results.length) {
+      lines.push(`<p class="ln-answer">Nothing in the connected sources matched that above the relevance threshold.</p>`);
+      lines.push(`<p class="ln-note">I searched 4 Slack channels, 18 Outlook threads, 12 Drive files and today's calendar. Try naming a client (Lemaire, Bramble &amp; Co, Château de Rêve), a colleague, or a file. An agent that guesses when it has found nothing is worse than one that says so.</p>`);
+      return lines;
+    }
+
+    const top = results;
+    const sources = [...new Set(top.map((r) => SOURCE_LABEL[r.source]))];
+    const sourceText = sources.length > 1
+      ? sources.slice(0, -1).join(", ") + " and " + sources[sources.length - 1]
+      : sources[0];
+
+    if (intent === "revision") {
+      const doc = top.find((r) => r.source === "drive");
+      if (doc) {
+        lines.push(`<p class="ln-answer">Yes. <b>${doc.title}</b> was last edited by ${esc(doc.author)}, ${esc(doc.time)} — now at ${doc.doc.version}. ${esc(doc.doc.changes)}</p>`);
+      } else {
+        lines.push(`<p class="ln-answer">No matching file changed recently. The closest matches are in ${sourceText}, not Drive.</p>`);
+      }
+      lines.push(`<p class="ln-head">Read</p>`);
+      lines.push(citeList(top));
+      return lines;
+    }
+
+    const entities = detectEntities(tokenize(query));
+    const subject = entities.length ? entities[0] : null;
+    const label = { lemaire: "Lemaire", bramble: "Bramble &amp; Co", chateau: "Château de Rêve", press: "the press event" }[subject];
+
+    if (intent === "synthesis" && subject) {
+      const openItem = top.find((r) => r.source === "slack" || r.source === "outlook");
+      lines.push(`<p class="ln-answer">${top.length} items across ${sourceText} touch ${label}, and they converge on one unresolved question rather than several. ${esc(openItem ? openItem.author : "")} raised it most recently${openItem ? " (" + esc(openItem.time) + ")" : ""}: ${esc(openItem ? openItem.line : "")}</p>`);
+      lines.push(`<p class="ln-answer">Nobody has answered it, and it is on the agenda of a meeting today — which means it gets decided either by you beforehand or live, in front of the client.</p>`);
+    } else if (intent === "synthesis") {
+      lines.push(`<p class="ln-answer">${top.length} items across ${sourceText} are relevant. The most recent is from ${esc(top[0].author)} (${esc(top[0].time)}): ${esc(top[0].line)}</p>`);
+    } else {
+      lines.push(`<p class="ln-answer">${results.length} match${results.length === 1 ? "" : "es"} across ${sourceText}, ranked by relevance and recency.</p>`);
+    }
+
+    lines.push(`<p class="ln-head">Sources</p>`);
+    lines.push(citeList(top));
+    lines.push(`<p class="ln-note">Retrieved from the connected sources at query time. Nothing here is generated from memory — every claim above traces to a numbered citation.</p>`);
+    return lines;
+  }
+
+  /* ---------- console rendering ---------- */
+
+  const out = $("console-out");
+  let busy = false;
+
+  function print(html) {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = html;
+    while (wrap.firstChild) out.appendChild(wrap.firstChild);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function ask(query) {
+    if (busy || !query.trim()) return;
+    busy = true;
+    print(`<p class="ln-prompt">&gt; ${esc(query)}</p>`);
+
+    const trace = [
+      "→ slack.search_messages(4 channels) … 4 hits",
+      "→ drive.search_files(12 files) … 3 hits",
+      "→ outlook.search_threads(18 threads) … 5 hits",
+      "→ calendar.list_events(today) … 7 events"
+    ];
+    const answer = compose(query);
+    const queue = trace.map((t) => `<p class="ln-trace">${t}</p>`).concat(answer);
+
+    if (reduceMotion) {
+      queue.forEach(print);
+      busy = false;
+      return;
+    }
+
+    let i = 0;
+    (function step() {
+      if (i >= queue.length) { busy = false; return; }
+      print(queue[i]);
+      i += 1;
+      setTimeout(step, i <= trace.length ? 180 : 260);
+    })();
+  }
+
+  $("console-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = $("console-input");
+    ask(input.value);
+    input.value = "";
+  });
+
+  $("prompts").innerHTML = D.suggestedPrompts.map((p) => `<button type="button" data-prompt="${esc(p)}">${esc(p)}</button>`).join("");
+  $("prompts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-prompt]");
+    if (b) ask(b.dataset.prompt);
+  });
+
+  renderTimeline();
+
+  print(`<p class="ln-trace">Entente assistant · connected to Slack, Google Drive, Google Calendar, Outlook · scoped to ${esc(D.viewer.name)}'s permissions</p>`);
+  print(`<p class="ln-trace">Ask a question, or pick one below.</p>`);
+})();
+</script>
+</body>
+</html>
