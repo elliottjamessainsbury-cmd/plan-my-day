@@ -293,9 +293,30 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
+    width: 100%;
     padding: 16px 18px 14px;
+    border: 0;
     border-bottom: 1px solid var(--line);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
   }
+
+  .panel-head:hover { background: var(--surface-2); }
+
+  .panel-head .meta { margin-left: auto; }
+
+  .panel-caret {
+    font-size: 10px;
+    color: var(--ink-3);
+    transition: transform .15s ease;
+    flex: none;
+  }
+
+  .panel.collapsed .panel-caret { transform: rotate(-90deg); }
+  .panel.collapsed .panel-head { border-bottom: 0; }
 
   .panel-head h3 {
     font-family: var(--serif);
@@ -312,6 +333,27 @@
   }
 
   /* ---------- timeline ---------- */
+
+  .panel-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -8px;
+  }
+
+  .panel-toolbar button {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 5px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  .panel-toolbar button:hover { color: var(--ink); border-color: var(--line-strong); }
 
   .timeline-scroll {
     position: relative;
@@ -810,35 +852,48 @@
     <p class="footnote" id="brief-footnote"></p>
   </section>
 
+  <div class="panel-toolbar">
+    <button type="button" id="collapse-all">Collapse all</button>
+  </div>
+
   <div class="columns">
     <div class="stack">
-      <section class="panel">
-        <div class="panel-head">
+      <section class="panel" id="panel-today">
+        <button class="panel-head" type="button" data-panel="panel-today" aria-expanded="true" aria-controls="body-today">
           <h3>Today</h3>
           <span class="meta">7 events · 4h 30m booked</span>
+          <span class="panel-caret">▼</span>
+        </button>
+        <div class="panel-body" id="body-today">
+          <div class="timeline-scroll" id="timeline-scroll">
+            <div class="timeline" id="timeline"></div>
+          </div>
+          <div class="event-detail empty" id="event-detail">Select a meeting to see the agenda, attendees, and what is unresolved going into it.</div>
         </div>
-        <div class="timeline-scroll" id="timeline-scroll">
-          <div class="timeline" id="timeline"></div>
-        </div>
-        <div class="event-detail empty" id="event-detail">Select a meeting to see the agenda, attendees, and what is unresolved going into it.</div>
       </section>
     </div>
 
     <div class="stack">
-      <section class="panel">
-        <div class="panel-head">
+      <section class="panel" id="panel-slack">
+        <button class="panel-head" type="button" data-panel="panel-slack" aria-expanded="true" aria-controls="body-slack">
           <h3>Open discussions</h3>
           <span class="meta">Slack · tagged, no reply from you</span>
+          <span class="panel-caret">▼</span>
+        </button>
+        <div class="panel-body" id="body-slack">
+          <ul class="rows" id="slack-rows"></ul>
         </div>
-        <ul class="rows" id="slack-rows"></ul>
       </section>
 
-      <section class="panel">
-        <div class="panel-head">
+      <section class="panel" id="panel-email">
+        <button class="panel-head" type="button" data-panel="panel-email" aria-expanded="true" aria-controls="body-email">
           <h3>Emails to reply to</h3>
           <span class="meta">Outlook · 4 of 18 threads</span>
+          <span class="panel-caret">▼</span>
+        </button>
+        <div class="panel-body" id="body-email">
+          <ul class="rows" id="email-rows"></ul>
         </div>
-        <ul class="rows" id="email-rows"></ul>
       </section>
     </div>
   </div>
@@ -950,9 +1005,47 @@
     });
 
     track.innerHTML = html;
-    const scroller = $("timeline-scroll");
-    scroller.scrollTop = Math.max(nowTop - 90, 0);
+    timelineOffset = Math.max(nowTop - 90, 0);
+    $("timeline-scroll").scrollTop = timelineOffset;
   }
+
+  let timelineOffset = 0;
+
+  /* ---------- collapsible modules ---------- */
+
+  const PANELS = ["panel-today", "panel-slack", "panel-email"];
+  const STORE = "entente.collapsed";
+
+  function setPanel(id, collapsed) {
+    const panel = document.getElementById(id);
+    const head = panel.querySelector(".panel-head");
+    const body = panel.querySelector(".panel-body");
+    panel.classList.toggle("collapsed", collapsed);
+    body.hidden = collapsed;
+    head.setAttribute("aria-expanded", String(!collapsed));
+    if (!collapsed && id === "panel-today") $("timeline-scroll").scrollTop = timelineOffset;
+  }
+
+  function savePanels() {
+    const shut = PANELS.filter((id) => document.getElementById(id).classList.contains("collapsed"));
+    $("collapse-all").textContent = shut.length === PANELS.length ? "Expand all" : "Collapse all";
+    try {
+      localStorage.setItem(STORE, JSON.stringify(shut));
+    } catch (e) { /* private browsing, or storage blocked — the page works without it */ }
+  }
+
+  function restorePanels() {
+    let shut = [];
+    try { shut = JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { shut = []; }
+    PANELS.forEach((id) => setPanel(id, shut.includes(id)));
+    $("collapse-all").textContent = shut.length === PANELS.length ? "Expand all" : "Collapse all";
+  }
+
+  $("collapse-all").addEventListener("click", () => {
+    const anyOpen = PANELS.some((id) => !document.getElementById(id).classList.contains("collapsed"));
+    PANELS.forEach((id) => setPanel(id, anyOpen));
+    savePanels();
+  });
 
   let selectedEvent = null;
 
@@ -1047,6 +1140,13 @@
   }
 
   document.addEventListener("click", (e) => {
+    const panelHead = e.target.closest("[data-panel]");
+    if (panelHead) {
+      const id = panelHead.dataset.panel;
+      setPanel(id, !document.getElementById(id).classList.contains("collapsed"));
+      savePanels();
+      return;
+    }
     const toggle = e.target.closest("[data-toggle]");
     if (toggle) { toggleRow(toggle.dataset.toggle); return; }
     const block = e.target.closest("[data-event]");
@@ -1058,6 +1158,11 @@
   function jumpTo(id) {
     const el = document.getElementById(id);
     if (!el) return;
+    const panel = el.closest(".panel");
+    if (panel && panel.classList.contains("collapsed")) {
+      setPanel(panel.id, false);
+      savePanels();
+    }
     if (el.classList.contains("row")) {
       if (!el.classList.contains("open")) toggleRow(id);
       el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
@@ -1281,6 +1386,7 @@
   });
 
   renderTimeline();
+  restorePanels();
 
   print(`<p class="ln-trace">Entente assistant · connected to Slack, Google Drive, Google Calendar, Outlook · scoped to ${esc(D.viewer.name)}'s permissions</p>`);
   print(`<p class="ln-trace">Ask a question, or pick one below.</p>`);
