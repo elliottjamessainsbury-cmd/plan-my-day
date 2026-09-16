@@ -2,7 +2,9 @@
 
 A working prototype of an agentic daily-planning surface for a B2B SaaS product — and, more to the point, an argument about how one should be built.
 
-**[Open `index.html`](index.html)** in any browser. No build step, no install, no API key.
+An example of an AI tool built for clients who want an internal, agentic dashboard to move fast with their daily work.
+
+**[Try the live demo](https://elliottjamessainsbury-cmd.github.io/plan-my-day/)** — or open `index.html` in any browser. No build step, no install, no API key.
 
 ---
 
